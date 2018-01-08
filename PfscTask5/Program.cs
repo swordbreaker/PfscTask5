@@ -43,14 +43,14 @@ namespace PfscTask5
             w.MouseWheel += _cameraHelper.OnMouseWheel;
             w.Closed += (object sender, EventArgs e) => _uiApp.Dispatcher.Invoke(()=> _uiApp.Shutdown());
 
-            w.MouseDown += (object sender, MouseButtonEventArgs e) =>
-            {
-                var x = e.X * 2f / w.Width - 1;
-                var y = e.Y * -2f / w.Height + 1;
-                var vec = new Vector4(x, y, 1, 0);
-                var vec2 = projection * _cameraHelper.CameraMatrix * vec;
-                cubes.Add(new RotatingCube(hProgram, a, b, c, m, vec2.Xyz));
-            };
+            //w.MouseDown += (object sender, MouseButtonEventArgs e) =>
+            //{
+            //    var x = e.X * 2f / w.Width - 1;
+            //    var y = e.Y * -2f / w.Height + 1;
+            //    var vec = new Vector4(x, y, 1, 0);
+            //    var vec2 = projection * _cameraHelper.CameraMatrix * vec;
+            //    cubes.Add(new RotatingCube(hProgram, a, b, c, m, vec2.Xyz));
+            //};
 
             w.Load += OnLoad;
             w.RenderFrame += Render;
@@ -114,7 +114,6 @@ namespace PfscTask5
 
             GL.Uniform4(GL.GetUniformLocation(hProgram, "enviroment"), new Vector4(0f, 0f, 0f, 1));
             GL.Uniform1(GL.GetUniformLocation(hProgram, "texture1"), _texture);
-
         }
 
         private static void Render(object sender, EventArgs e)

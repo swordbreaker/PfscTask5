@@ -23,9 +23,5 @@ void main()
     
     vec4 specular = pow(max(0, -dot(r, normalize(f_pos.xyz))), 50) * vec4(1);
 
-    // float d = dot(f_up.xyz, f_normal);
-    // d = clamp(d, 0, 1);
-    // texColor = d * texColor + (1 - d) * vec4(1,1,1,1);
-
     color = (enviroment * f_color) + texColor * diffuse + specular;
 }

@@ -25,6 +25,14 @@ namespace PfscTask5
 
         public void Move(float dt)
         {
+            var q = GetRotation();
+            q.Normalize();
+
+            _x[3] = q.W;
+            _x[4] = q.X;
+            _x[5] = q.Y;
+            _x[6] = q.Z;
+
             _x = Runge(_x, dt);
         }
 
@@ -87,7 +95,10 @@ namespace PfscTask5
         public Quaternion GetRotation()
         {
             var q = new Quaternion(_x[4], _x[5], _x[6], _x[3]);
-            q.Normalize();
+            //var q = new Quaternion(_x[3], _x[4], _x[5], _x[6]);
+            //q.W = 2f * (float)Math.Asin(q.W);
+            //q.Normalize();
+            
             return q;
         }
     }

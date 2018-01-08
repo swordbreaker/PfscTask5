@@ -23,9 +23,9 @@ namespace PfscTask5
 
             _pos = pos;
 
-            var w1 = Mathf.GetRandomRange(0.1f, 20f);
-            var w2 = Mathf.GetRandomRange(0.1f, 20f);
-            var w3 = Mathf.GetRandomRange(0.1f, 20f);
+            var w1 = Mathf.GetRandomRange(0.1f, 10f);
+            var w2 = Mathf.GetRandomRange(0.1f, 10f);
+            var w3 = Mathf.GetRandomRange(0.1f, 10f);
 
             float i1 = (1 / 12f) * m * (b * b + c * c);
             float i2 = (1 / 12f) * m * (a * a + c * c);
