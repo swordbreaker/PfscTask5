@@ -54,6 +54,38 @@
                                 <Paragraph>Look around</Paragraph>
                             </TableCell>
                         </TableRow>
+                        <TableRow>
+                            <TableCell FontWeight="Bold">
+                                <Paragraph>X</Paragraph>
+                            </TableCell>
+                            <TableCell>
+                                <Paragraph>Explode</Paragraph>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell FontWeight="Bold">
+                                <Paragraph>C</Paragraph>
+                            </TableCell>
+                            <TableCell>
+                                <Paragraph>Change Explosion Type</Paragraph>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell FontWeight="Bold">
+                                <Paragraph>Y</Paragraph>
+                            </TableCell>
+                            <TableCell>
+                                <Paragraph>Less cube in Explosion</Paragraph>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell FontWeight="Bold">
+                                <Paragraph>V</Paragraph>
+                            </TableCell>
+                            <TableCell>
+                                <Paragraph>More cube in Explosion</Paragraph>
+                            </TableCell>
+                        </TableRow>
                     </TableRowGroup>
                 </Table>
             </FlowDocument>

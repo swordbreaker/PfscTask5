@@ -14,11 +14,11 @@ namespace PfscTask5
     {
         private static Texture _texture;
 
-        private static CameraHelper _cameraHelper = new CameraHelper(0, 0, 5);
+        private static readonly CameraHelper CameraHelper = new CameraHelper(0, 0, 5);
 
-        private static int hProgram = 0;
+        private static GlProgram _glProgram;
 
-        private static Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, 1, 0.1f, 100);
+        private static Matrix4 _projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, 1, 0.1f, 100);
 
         private static GameWindow w;
 
@@ -27,10 +27,13 @@ namespace PfscTask5
         private static float b = 0.3f;
         private static float c = 0.2f;
 
-        private static List<RotatingCube> cubes = new List<RotatingCube>();
+        private static readonly LinkedList<RotatingCube> Cubes = new LinkedList<RotatingCube>();
 
         private static Thread _uiThread;
         private static Application _uiApp;
+
+        private static ExplodeType _explodeType = ExplodeType.Sphere;
+        private static int _numExplode = 20;
 
         private static void Main()
         {
@@ -38,19 +41,22 @@ namespace PfscTask5
 
             ShowInfoWindow();
 
-            w.KeyDown += _cameraHelper.OnKeyDown;
+            w.KeyDown += CameraHelper.OnKeyDown;
             w.KeyDown += OnKeyDown;
-            w.MouseWheel += _cameraHelper.OnMouseWheel;
-            w.Closed += (object sender, EventArgs e) => _uiApp.Dispatcher.Invoke(()=> _uiApp.Shutdown());
+            w.MouseWheel += CameraHelper.OnMouseWheel;
+            w.Closed += (object sender, EventArgs e) => _uiApp.Dispatcher.Invoke(() => _uiApp.Shutdown());
 
-            //w.MouseDown += (object sender, MouseButtonEventArgs e) =>
-            //{
-            //    var x = e.X * 2f / w.Width - 1;
-            //    var y = e.Y * -2f / w.Height + 1;
-            //    var vec = new Vector4(x, y, 1, 0);
-            //    var vec2 = projection * _cameraHelper.CameraMatrix * vec;
-            //    cubes.Add(new RotatingCube(hProgram, a, b, c, m, vec2.Xyz));
-            //};
+            w.MouseDown += (object sender, MouseButtonEventArgs e) =>
+            {
+                var x = e.X * 2f / w.Width - 1;
+                var y = e.Y * -2f / w.Height + 1;
+                var vec = new Vector4(x, y, 0, 1);
+                //var vec2 = projection * _cameraHelper.CameraMatrix * vec;
+
+                var vm = _projection * CameraHelper.CameraMatrix;
+                var v = Vector4.Transform(vec, vm);
+                Explode(v.Xyz, ExplodeType.Sphere);
+            };
 
             w.Load += OnLoad;
             w.RenderFrame += Render;
@@ -64,56 +70,26 @@ namespace PfscTask5
         {
             //set up opengl
             GL.ClearColor(0.5f, 0.5f, 0.5f, 0);
-            //GL.ClearDepth(1);
             GL.Enable(EnableCap.DepthTest);
-            //GL.DepthFunc(DepthFunction.Less);
-            GL.Disable(EnableCap.CullFace);
+            //GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.FramebufferSrgb);
 
-            //load, compile and link shaders
-            var VertexShaderSource = File.ReadAllText(@"Shaders\VertexShader.glsl");
-
-            var hVertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(hVertexShader, VertexShaderSource);
-            GL.CompileShader(hVertexShader);
-            GL.GetShader(hVertexShader, ShaderParameter.CompileStatus, out int status);
-            if (status != 1)
-                throw new Exception(GL.GetShaderInfoLog(hVertexShader));
-
-            var FragmentShaderSource = File.ReadAllText(@"Shaders\FragmentShader.glsl");
-
-            var hFragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(hFragmentShader, FragmentShaderSource);
-            GL.CompileShader(hFragmentShader);
-            GL.GetShader(hFragmentShader, ShaderParameter.CompileStatus, out status);
-            if (status != 1)
-                throw new Exception(GL.GetShaderInfoLog(hFragmentShader));
-
-            //link shaders to a program
-            hProgram = GL.CreateProgram();
-            GL.AttachShader(hProgram, hFragmentShader);
-            GL.AttachShader(hProgram, hVertexShader);
-            GL.LinkProgram(hProgram);
-            GL.GetProgram(hProgram, GetProgramParameterName.LinkStatus, out status);
-            if (status != 1)
-                throw new Exception(GL.GetProgramInfoLog(hProgram));
+            _glProgram = new GlProgram(@"Shaders\VertexShader.glsl", @"Shaders\FragmentShader.glsl");
 
             //Textures
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
             _texture = new Texture(@"Textures\05.JPG");
 
-            {
-                //check for errors during all previous calls
-                var error = GL.GetError();
-                if (error != ErrorCode.NoError)
-                    throw new Exception(error.ToString());
-            }
+            //check for errors during all previous calls
+            var error = GL.GetError();
+            if (error != ErrorCode.NoError)
+                throw new Exception(error.ToString());
 
-            GL.UseProgram(hProgram);
+            _glProgram.Use();
 
-            GL.Uniform4(GL.GetUniformLocation(hProgram, "enviroment"), new Vector4(0f, 0f, 0f, 1));
-            GL.Uniform1(GL.GetUniformLocation(hProgram, "texture1"), _texture);
+            GL.Uniform4(GL.GetUniformLocation(_glProgram, "enviroment"), new Vector4(0f, 0f, 0f, 1));
+            GL.Uniform1(GL.GetUniformLocation(_glProgram, "texture1"), _texture);
         }
 
         private static void Render(object sender, EventArgs e)
@@ -121,12 +97,24 @@ namespace PfscTask5
             //clear screen and z-buffer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.UniformMatrix4(GL.GetUniformLocation(hProgram, "p"), false, ref projection);
+            GL.UniformMatrix4(GL.GetUniformLocation(_glProgram, "p"), false, ref _projection);
 
-            foreach (var cube in cubes)
+            var node = Cubes.First;
+
+            while (node != null)
             {
-                cube.Render((float)w.RenderTime * 0.2f, _cameraHelper.CameraMatrix);
+                var cube = node.Value;
+                cube.Render((float)w.RenderTime * 0.2f, CameraHelper.CameraMatrix);
+                var newNode = node.Next;
+                if (cube.TimeToLife < 0) Cubes.Remove(node);
+                node = newNode;
             }
+
+            //foreach (var cube in Cubes)
+            //{
+            //    cube.Render((float)w.RenderTime * 0.2f, CameraHelper.CameraMatrix);
+            //    if(cube.TimeToLife < 0) Cubes.RemoveFirst();
+            //}
 
             //display
             w.SwapBuffers();
@@ -139,7 +127,7 @@ namespace PfscTask5
         private static void Resize(object sender, EventArgs e)
         {
             var r = w.Width / (float)w.Height;
-            projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, r, 0.1f, 100);
+            _projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, r, 0.1f, 100);
             GL.Viewport(w.ClientRectangle);
         }
 
@@ -148,14 +136,30 @@ namespace PfscTask5
             switch (keyEventArgs.Key)
             {
                 case Key.R:
-                    _cameraHelper.Azimut = 0;
-                    _cameraHelper.Elevation = 0;
-                    _cameraHelper.Radius = 5;
-                    cubes.Clear();
+                    CameraHelper.Azimut = 0;
+                    CameraHelper.Elevation = 0;
+                    CameraHelper.Radius = 5;
+                    Cubes.Clear();
                     break;
                 case Key.Space:
                     var p = new Vector3(-5, Mathf.GetRandomRange(-3, 3), 0);
-                    cubes.Add(new RotatingCube(hProgram, a, b, c, m, p));
+                    Cubes.AddLast(new RotatingCube(_glProgram, a, b, c, m, p));
+                    break;
+                case Key.X:
+                    var x = Mathf.GetRandomRange(-3, 3);
+                    var y = Mathf.GetRandomRange(-2, 2);
+                    Explode(new Vector3(x, y, 0), _explodeType);
+                    break;
+                case Key.C:
+                    _explodeType = (ExplodeType)(((int)_explodeType + 1) % (Enum.GetValues(typeof(ExplodeType)).Length));
+                    break;
+                case Key.Y:
+                    _numExplode--;
+                    if (_numExplode < 1) _numExplode = 1;
+                    break;
+                case Key.V:
+                    _numExplode++;
+                    if (_numExplode > 100) _numExplode = 100;
                     break;
                 case Key.Number1:
                     a = 0.2f;
@@ -180,6 +184,42 @@ namespace PfscTask5
                 case Key.F1:
                     ShowInfoWindow();
                     break;
+            }
+        }
+
+        private enum ExplodeType { Sphere, Tan, Random }
+
+        private static void Explode(Vector3 pos, ExplodeType explodeType)
+        {
+            var n = _numExplode;
+            var phi = 2f * (float)Math.PI / n;
+
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    var v = Vector3.Zero;
+
+                    switch (explodeType)
+                    {
+                        case ExplodeType.Sphere:
+                            var vxy = new Vector3((float)Math.Cos(phi * i), (float)Math.Sin(phi * i), 0);
+                            var vyz = new Vector3((float)Math.Cos(phi * j), 0, (float)Math.Sin(phi * j));
+                            v = vxy + vyz;
+                            break;
+                        case ExplodeType.Tan:
+                            v = new Vector3((float)Math.Cos(phi * i), (float)Math.Sin(phi * i), (float)Math.Tan(phi * j));
+                            break;
+                        case ExplodeType.Random:
+                            v = new Vector3(Mathf.GetRandomRange(-1, 1), Mathf.GetRandomRange(-1, 1), Mathf.GetRandomRange(-1, 1));
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(explodeType), explodeType, null);
+                    }
+
+                    Cubes.AddLast(new RotatingGravityCube(_glProgram, a, b, c, m, pos, v * 5));
+                }
+
             }
         }
 

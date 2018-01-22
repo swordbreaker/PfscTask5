@@ -14,22 +14,24 @@ namespace PfscTask5
 
         private readonly GyroDynamics _gyroDynamics;
         private readonly Mesh _cube;
+        public float TimeToLife { get; private set; }
 
-        public RotatingCube(int hProgram, float a, float b,  float c, float m, Vector3 pos)
+        public RotatingCube(int hProgram, float a, float b,  float c, float m, Vector3 pos, float lifeTime = 2)
         {
             _a = a;
             _b = b;
             _c = c;
 
             _pos = pos;
+            TimeToLife = lifeTime;
 
             var w1 = Mathf.GetRandomRange(0.1f, 10f);
             var w2 = Mathf.GetRandomRange(0.1f, 10f);
             var w3 = Mathf.GetRandomRange(0.1f, 10f);
 
-            float i1 = (1 / 12f) * m * (b * b + c * c);
-            float i2 = (1 / 12f) * m * (a * a + c * c);
-            float i3 = (1 / 12f) * m * (a * a + b * b);
+            var i1 = (1 / 12f) * m * (b * b + c * c);
+            var i2 = (1 / 12f) * m * (a * a + c * c);
+            var i3 = (1 / 12f) * m * (a * a + b * b);
 
             _gyroDynamics = new GyroDynamics(i1, i2, i3);
             _gyroDynamics.SetState(w1, w2, w3, Quaternion.Identity);
@@ -47,14 +49,27 @@ namespace PfscTask5
             _gyroDynamics.I3 = (1 / 12f) * m * (a * a + b * b);
         }
 
-        public void Render(float dt, Matrix4 m)
+        public virtual Matrix4 GetRotationM(float dt)
         {
             var q = _gyroDynamics.GetRotation();
-
-            _cube.ViewModel = Matrix4.CreateScale(_a, _b, _c) * Matrix4.CreateFromQuaternion(q) * Matrix4.CreateTranslation(_pos) * m;
-            _cube.Render(PrimitiveType.Triangles);
-            _gyroDynamics.Move(dt);
+            var m = Matrix4.CreateFromQuaternion(q);
             _pos.X = ((_pos.X + dt * 2 + xBorder) % (xBorder * 2)) - xBorder;
+            _gyroDynamics.Move(dt);
+            return Matrix4.CreateFromQuaternion(q);
+        }
+
+        public virtual Matrix4 GetTransaltionM(float dt)
+        {
+            var m = Matrix4.CreateTranslation(_pos);
+            _pos.X = ((_pos.X + dt * 2 + xBorder) % (xBorder * 2)) - xBorder;
+            return m;
+        }
+
+        public virtual void Render(float dt, Matrix4 m)
+        {
+            _cube.ViewModel = Matrix4.CreateScale(_a, _b, _c) * GetRotationM(dt) * GetTransaltionM(dt) * m;
+            _cube.Render(PrimitiveType.Triangles);
+            TimeToLife -= dt;
         }
     }
 }
