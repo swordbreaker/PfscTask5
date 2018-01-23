@@ -16,6 +16,8 @@ namespace PfscTask5
         private readonly Mesh _cube;
         public float TimeToLife { get; private set; }
 
+        public virtual Vector3 Pos => _pos;
+
         public RotatingCube(int hProgram, float a, float b,  float c, float m, Vector3 pos, float lifeTime = 2)
         {
             _a = a;
@@ -55,6 +57,7 @@ namespace PfscTask5
             var m = Matrix4.CreateFromQuaternion(q);
             _pos.X = ((_pos.X + dt * 2 + xBorder) % (xBorder * 2)) - xBorder;
             _gyroDynamics.Move(dt);
+
             return Matrix4.CreateFromQuaternion(q);
         }
 
@@ -64,6 +67,8 @@ namespace PfscTask5
             _pos.X = ((_pos.X + dt * 2 + xBorder) % (xBorder * 2)) - xBorder;
             return m;
         }
+
+        public Quaternion Rotation => _gyroDynamics.GetRotation();
 
         public virtual void Render(float dt, Matrix4 m)
         {

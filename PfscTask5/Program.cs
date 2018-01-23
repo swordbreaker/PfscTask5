@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using OpenTK.Input;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media;
 
 namespace PfscTask5
 {
@@ -17,6 +18,7 @@ namespace PfscTask5
         private static readonly CameraHelper CameraHelper = new CameraHelper(0, 0, 5);
 
         private static GlProgram _glProgram;
+        private static GlProgram _shadelessProgramm;
 
         private static Matrix4 _projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, 1, 0.1f, 100);
 
@@ -53,9 +55,15 @@ namespace PfscTask5
                 var vec = new Vector4(x, y, 0, 1);
                 //var vec2 = projection * _cameraHelper.CameraMatrix * vec;
 
-                var vm = _projection * CameraHelper.CameraMatrix;
-                var v = Vector4.Transform(vec, vm);
-                Explode(v.Xyz, ExplodeType.Sphere);
+                var vm = CameraHelper.CameraMatrix;
+                //var v = Vector4.Transform(vec, vm);
+                //var v = Vector3.TransformPosition(vec, vm);
+                var v =  vec * vm;
+                v = _projection * v;
+                v /= v.W;
+
+
+                Explode(v.Xyz, _explodeType);
             };
 
             w.Load += OnLoad;
@@ -71,10 +79,10 @@ namespace PfscTask5
             //set up opengl
             GL.ClearColor(0.5f, 0.5f, 0.5f, 0);
             GL.Enable(EnableCap.DepthTest);
-            //GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.FramebufferSrgb);
 
             _glProgram = new GlProgram(@"Shaders\VertexShader.glsl", @"Shaders\FragmentShader.glsl");
+            _shadelessProgramm = new GlProgram(@"Shaders\VertexShaderShadeless.glsl", @"Shaders\FragmentShaderShadeless.glsl");
 
             //Textures
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
@@ -105,16 +113,18 @@ namespace PfscTask5
             {
                 var cube = node.Value;
                 cube.Render((float)w.RenderTime * 0.2f, CameraHelper.CameraMatrix);
+                //_shadelessProgramm.Use();
+                //GL.LineWidth(5);
+                //var axis = cube.Rotation.ToAxisAngle();
+                ////var line = Figures.Line(_shadelessProgramm, cube.Pos, cube.Pos + axis.Xyz, Colors.White);
+                //var line = Figures.Line(_shadelessProgramm, new Vector3(1,1,0), new Vector3(0, 0, 0), Colors.White);
+                //line.ViewModel = CameraHelper.CameraMatrix;
+                //line.Render(PrimitiveType.Triangles);
+                //_glProgram.Use();
                 var newNode = node.Next;
                 if (cube.TimeToLife < 0) Cubes.Remove(node);
                 node = newNode;
             }
-
-            //foreach (var cube in Cubes)
-            //{
-            //    cube.Render((float)w.RenderTime * 0.2f, CameraHelper.CameraMatrix);
-            //    if(cube.TimeToLife < 0) Cubes.RemoveFirst();
-            //}
 
             //display
             w.SwapBuffers();
@@ -187,10 +197,26 @@ namespace PfscTask5
             }
         }
 
-        private enum ExplodeType { Sphere, Tan, Random }
+        private enum ExplodeType { Sphere, Tan, Random, Cube }
 
         private static void Explode(Vector3 pos, ExplodeType explodeType)
         {
+            if(explodeType == ExplodeType.Cube)
+            {
+                var verts = Figures.CubeVerts;
+                var normals = Figures.CubeNormals;
+
+                for (int i = 0; i < verts.Length; i += 3)
+                {
+                    var p = new Vector3(verts[i], verts[i + 1], verts[i + 2]);
+                    var v = new Vector3(normals[i], normals[i + 1], normals[i + 2]);
+
+                    Cubes.AddLast(new RotatingGravityCube(_glProgram, a, b, c, m, p, v * 2));
+                }
+
+                return;
+            }
+
             var n = _numExplode;
             var phi = 2f * (float)Math.PI / n;
 

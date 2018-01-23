@@ -17,7 +17,7 @@ namespace PfscTask5
         private readonly float _mass;
         private readonly Vector3 _a = new Vector3(0f, -G, 0);
 
-        private Vector3 Pos { get; set; }
+        public Vector3 Pos;
 
         public GravityBody(Vector3 v0, Vector3 pos0, float mass)
         {

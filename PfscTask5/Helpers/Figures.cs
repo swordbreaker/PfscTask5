@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using OpenTK;
 
@@ -119,7 +120,7 @@ namespace PfscTask5
                 0,-1,0,
                 0,-1,0,
                 0,-1,0,
-            }, 
+            },
             uvs: new float[]
             {
                 0,1,
@@ -151,6 +152,24 @@ namespace PfscTask5
                 1,1,
                 1,0,
                 0,0,
+            },
+            hProgram: hProgramm
+            );
+
+        public static Mesh Line(int hProgramm, Vector3 start, Vector3 end, Color color) => new Mesh(
+            idx: new int[]
+            {
+                0, 1, 0
+            },
+            verts: new float[]
+            {
+                start.X, start.Y, start.Z,
+                end.X, end.Y, end.Z
+            },
+            colors: new float[]
+            {
+                color.ScR, color.ScG, color.ScB, color.ScA,
+                color.ScR, color.ScG, color.ScB, color.ScA
             },
             hProgram: hProgramm
             );
@@ -208,5 +227,71 @@ namespace PfscTask5
 
         //    return new Mesh(verts, idx, colors, normals, uvs, hProgram);
         //}
+
+        public static float[] CubeNormals = new float[]
+            {
+                0,0,-1,
+                0,0,-1,
+                0,0,-1,
+                0,0,-1,
+                //Top
+                0,0,1,
+                0,0,1,
+                0,0,1,
+                0,0,1,
+                //Left
+                -1,0,0,
+                -1,0,0,
+                -1,0,0,
+                -1,0,0,
+                //Right
+                1,0,0,
+                1,0,0,
+                1,0,0,
+                1,0,0,
+                //Front
+                0,1,0,
+                0,1,0,
+                0,1,0,
+                0,1,0,
+                //Back
+                0,-1,0,
+                0,-1,0,
+                0,-1,0,
+                0,-1,0,
+            };
+
+        public static float[] CubeVerts = new float[]
+            {
+                -1, -1, -1,
+                +1, -1, -1,
+                +1, +1, -1,
+                -1, +1, -1,
+
+                -1, -1, +1,
+                +1, -1, +1,
+                +1, +1, +1,
+                -1, +1, +1,
+
+                -1, -1, -1,
+                -1, +1, -1,
+                -1, +1, +1,
+                -1, -1, +1,
+
+                +1, -1, +1,
+                +1, +1, +1,
+                +1, +1, -1,
+                +1, -1, -1,
+
+                -1, +1, -1,
+                +1, +1, -1,
+                +1, +1, +1,
+                -1, +1, +1,
+
+                -1, -1, +1,
+                +1, -1, +1,
+                +1, -1, -1,
+                -1, -1, -1,
+            };
     }
 }
